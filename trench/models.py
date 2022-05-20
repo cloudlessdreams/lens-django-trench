@@ -8,6 +8,7 @@ from django.db.models import (
     Model,
     QuerySet,
     TextField,
+    DateField,
 )
 from django.utils.translation import gettext_lazy as _
 
@@ -67,6 +68,8 @@ class MFAMethod(Model):
     )
     name = CharField(_("name"), max_length=255)
     secret = CharField(_("secret"), max_length=255)
+    ip_whitelist = CharField(max_length=50, blank=True)
+    remember = DateField(blank=True, null=True)
     is_primary = BooleanField(_("is primary"), default=False)
     is_active = BooleanField(_("is active"), default=False)
     _backup_codes = TextField(_("backup codes"), blank=True)

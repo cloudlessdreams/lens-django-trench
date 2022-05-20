@@ -40,7 +40,7 @@ from trench.serializers import (
 )
 from trench.settings import SOURCE_FIELD, trench_settings
 from trench.utils import available_method_choices, get_mfa_model, user_token_generator
-
+from datetime import date
 
 class MFAStepMixin(APIView, ABC):
     permission_classes = (AllowAny,)
@@ -54,6 +54,7 @@ class MFAFirstStepMixin(MFAStepMixin, ABC):
     def post(self, request: Request) -> Response:
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        mfa_model = get_mfa_model()
         try:
             user = authenticate_user_command(
                 request=request,
@@ -62,8 +63,20 @@ class MFAFirstStepMixin(MFAStepMixin, ABC):
             )
         except MFAValidationError as cause:
             return ErrorResponse(error=cause)
+
         try:
-            mfa_model = get_mfa_model()
+            user_mfa = mfa_model.objects.get(user_id=user.id)
+            ip_list = user_mfa.ip_whitelist
+            ip = serializer.data['ip']
+            days_ago = user_mfa.remember - date.today()
+
+            if (days_ago.days > -7 and
+                (ip_list == ip) ):
+                return self._successful_authentication_response(user=user)
+        except:
+            pass
+
+        try:
             mfa_method = mfa_model.objects.get_primary_active(user_id=user.id)
             get_mfa_handler(mfa_method=mfa_method).dispatch_message()
             return Response(
@@ -80,11 +93,17 @@ class MFASecondStepMixin(MFAStepMixin, ABC):
     def post(self, request: Request) -> Response:
         serializer = CodeLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        mfa_model = get_mfa_model()        
         try:
             user = authenticate_second_step_command(
                 code=serializer.validated_data["code"],
                 ephemeral_token=serializer.validated_data["ephemeral_token"],
             )
+            user_mfa = mfa_model.objects.get(user_id=user.id)
+            user_mfa.ip_whitelist = serializer.validated_data['ip']
+            if serializer.data['remember_me'] == True:
+                user_mfa.remember = date.today()
+            user_mfa.save()
             return self._successful_authentication_response(user=user)
         except MFAValidationError as cause:
             return ErrorResponse(error=cause, status=HTTP_401_UNAUTHORIZED)

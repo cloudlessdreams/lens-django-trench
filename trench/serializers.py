@@ -3,7 +3,7 @@ from django.db.models import Model
 
 from abc import abstractmethod
 from rest_framework.authtoken.models import Token
-from rest_framework.fields import CharField, ChoiceField
+from rest_framework.fields import CharField, ChoiceField, BooleanField
 from rest_framework.serializers import ModelSerializer, Serializer
 from typing import Any, Iterable, OrderedDict, Type
 
@@ -129,7 +129,7 @@ class MFAMethodCodeSerializer(RequestBodyValidator):
 
 class LoginSerializer(RequestBodyValidator):
     password = CharField(write_only=True)
-
+    ip = CharField()
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.fields[User.USERNAME_FIELD] = CharField()
@@ -138,6 +138,8 @@ class LoginSerializer(RequestBodyValidator):
 class CodeLoginSerializer(RequestBodyValidator):
     ephemeral_token = CharField()
     code = CharField()
+    ip = CharField()
+    remember_me = BooleanField(required=True)
 
 
 class UserMFAMethodSerializer(ModelSerializer):
