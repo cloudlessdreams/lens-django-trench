@@ -66,13 +66,9 @@ class MFAFirstStepMixin(MFAStepMixin, ABC):
 
         try:
             user_mfa = mfa_model.objects.get(user_id=user.id)
-            ip_list = user_mfa.ip_whitelist
-            ip = serializer.data['ip']
             days_ago = user_mfa.remember - date.today()
-
-            if (days_ago.days > -7 and
-                (ip_list == ip) ):
-                return self._successful_authentication_response(user=user)
+            if (days_ago.days > -15):
+                return self._remembered_authentication_response(user=user)
         except:
             pass
 
@@ -100,7 +96,6 @@ class MFASecondStepMixin(MFAStepMixin, ABC):
                 ephemeral_token=serializer.validated_data["ephemeral_token"],
             )
             user_mfa = mfa_model.objects.get(user_id=user.id)
-            user_mfa.ip_whitelist = serializer.validated_data['ip']
             if serializer.data['remember_me'] == True:
                 user_mfa.remember = date.today()
             user_mfa.save()

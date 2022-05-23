@@ -9,6 +9,10 @@ class MFAJWTView(MFAStepMixin):
         token = RefreshToken.for_user(user=user)
         return Response(data={"refresh": str(token), "access": str(token.access_token)})
 
+    def _remembered_authentication_response(self, user: User) -> Response:
+        token = RefreshToken.for_user(user=user)
+        return Response(data={"refresh": str(token), "access": str(token.access_token), 'method': 'remembered'})
+
 
 class MFAFirstStepJWTView(MFAJWTView, MFAFirstStepMixin):
     pass
