@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 
@@ -37,6 +38,7 @@ from trench.serializers import (
     MFAMethodDeactivationValidator,
     UserMFAMethodSerializer,
     generate_model_serializer,
+    MFAMethodActivation
 )
 from trench.settings import SOURCE_FIELD, trench_settings
 from trench.utils import available_method_choices, get_mfa_model, user_token_generator
@@ -114,13 +116,15 @@ class MFAMethodActivationView(APIView):
         except MFAMethodDoesNotExistError as cause:
             return ErrorResponse(error=cause)
         if source_field is not None:
-            serializer_class = generate_model_serializer(
-                name="MFAMethodActivationValidator",
-                model=request.user.__class__,
-                fields=(source_field,),
-            )
-            serializer = serializer_class(data=request.data)
+            # serializer_class = generate_model_serializer(
+            #     name="MFAMethodActivationValidator",
+            #     model=request.user.__class__,
+            #     fields=(source_field,),
+            # )
+            serializer = MFAMethodActivation(data=request.data)
             serializer.is_valid(raise_exception=True)
+            phone_number = serializer.validated_data.pop('phone_number')
+            user = get_user_model().objects.filter(id=request.user.id).update(phone_number=phone_number)
         try:
             mfa = create_mfa_method_command(
                 user_id=request.user.id,

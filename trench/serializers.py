@@ -3,7 +3,7 @@ from django.db.models import Model
 
 from abc import abstractmethod
 from rest_framework.authtoken.models import Token
-from rest_framework.fields import CharField, ChoiceField, BooleanField
+from rest_framework.fields import CharField, ChoiceField, BooleanField, IntegerField
 from rest_framework.serializers import ModelSerializer, Serializer
 from typing import Any, Iterable, OrderedDict, Type
 
@@ -33,6 +33,9 @@ def generate_model_serializer(name: str, model: Model, fields: Iterable[str]) ->
     )
     return type(name, (ModelSerializer,), {"Meta": meta_subclass})
 
+
+class MFAMethodActivation(Serializer):
+    phone_number = IntegerField(write_only=True)
 
 class RequestBodyValidator(Serializer):
     def update(self, instance: Model, validated_data: OrderedDict[str, Any]):
