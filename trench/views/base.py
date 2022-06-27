@@ -98,7 +98,7 @@ class MFASecondStepMixin(MFAStepMixin, ABC):
                 ephemeral_token=serializer.validated_data["ephemeral_token"],
             )
             user_mfa = mfa_model.objects.get_primary_active(user_id=user.id)
-            if serializer.data['e'] == True:
+            if serializer.data['remember_me'] == True:
                 user_mfa.remember = date.today()
             user_mfa.save()
             return self._successful_authentication_response(user=user)
