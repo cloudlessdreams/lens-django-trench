@@ -67,7 +67,7 @@ class MFAFirstStepMixin(MFAStepMixin, ABC):
             return ErrorResponse(error=cause)
 
         try:
-            user_mfa = mfa_model.objects.get(user_id=user.id)
+            user_mfa = mfa_model.objects.get_primary_active(user_id=user.id)
             days_ago = user_mfa.remember - date.today()
             if (days_ago.days > -15):
                 return self._remembered_authentication_response(user=user)
@@ -91,14 +91,14 @@ class MFASecondStepMixin(MFAStepMixin, ABC):
     def post(self, request: Request) -> Response:
         serializer = CodeLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        mfa_model = get_mfa_model()        
+        mfa_model = get_mfa_model()
         try:
             user = authenticate_second_step_command(
                 code=serializer.validated_data["code"],
                 ephemeral_token=serializer.validated_data["ephemeral_token"],
             )
-            user_mfa = mfa_model.objects.get(user_id=user.id)
-            if serializer.data['remember_me'] == True:
+            user_mfa = mfa_model.objects.get_primary_active(user_id=user.id)
+            if serializer.data['e'] == True:
                 user_mfa.remember = date.today()
             user_mfa.save()
             return self._successful_authentication_response(user=user)
