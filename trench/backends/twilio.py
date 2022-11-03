@@ -14,7 +14,7 @@ from trench.settings import TWILIO_VERIFIED_FROM_NUMBER
 
 
 class TwilioMessageDispatcher(AbstractMessageDispatcher):
-    _SMS_BODY = _("Your verification code is: ")
+    _SMS_BODY = _("Your verification code for Lens is: ")
     _SUCCESS_DETAILS = _("SMS message with MFA code has been sent.")
 
     def dispatch_message(self) -> DispatchResponse:
@@ -22,7 +22,7 @@ class TwilioMessageDispatcher(AbstractMessageDispatcher):
             client = Client()
             client.messages.create(
                 body=self._SMS_BODY + self.create_code(),
-                to=self._to,
+                to=f'+{self._to}',
                 from_=self._config.get(TWILIO_VERIFIED_FROM_NUMBER),
             )
             return SuccessfulDispatchResponse(details=self._SUCCESS_DETAILS)
